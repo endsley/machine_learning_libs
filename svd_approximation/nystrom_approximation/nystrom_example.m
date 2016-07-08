@@ -6,7 +6,7 @@ format short
 
 %	Generating Data, 4 by 4 matrix with rank of 2
 n = 100;
-sampling_percentage = 0.5;
+sampling_percentage = 0.7;
 num_of_eig = 5;
 seedM = floor(10*rand(n,n));
 [Q,R] = qr(seedM);
@@ -14,9 +14,6 @@ V = Q(:,1:num_of_eig);
 X = V*diag(1:num_of_eig)*V';
 [U,S,V] = svd(X);
 printf('Real eigen values %s\n' , mat2str(1:num_of_eig));
-diag(S)
-
-
 
 
 l = floor(n*sampling_percentage);
