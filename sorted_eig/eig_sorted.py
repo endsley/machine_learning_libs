@@ -2,7 +2,7 @@
 
 import numpy as np
 
-def svd_sorted(X):
+def eig_sorted(X):
 	D,V = np.linalg.eig(X)	
 	lastV = None
 	sort_needed = False
@@ -22,7 +22,7 @@ def svd_sorted(X):
 if __name__ == '__main__':
 	from random_matrix import *
 	M = random_matrix(2, 5)
-	[V,D] = svd_sorted(M)
+	[V,D] = eig_sorted(M)
 	
 	print 'V : \n' , V , '\n'
 	print 'D : \n' , D , '\n'

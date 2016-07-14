@@ -2,10 +2,11 @@
 
 import numpy as np
 
+
 #	X must be positive semidefinite, if not, u must use column sampling on svd
 #	sampling_percentage is between 0 to 1
 #	note that X3 = [W G21.T; G21 G22]
-def nystrom(X, sampling_percentage):
+def nystrom(X, return_rank, sampling_percentage):
 	p = sampling_percentage
 	num_of_columns = np.floor(p*X.shape[1])
 	rp = np.random.permutation(X.shape[1])
@@ -20,10 +21,16 @@ def nystrom(X, sampling_percentage):
 	G21 = X3[num_of_columns:, 0:num_of_columns]
 	G22 = X3[num_of_columns:, num_of_columns:]
 
-	[V,D] = np.linalg.eig(W)
+	[V,D] = eig_sorted(W)
 
-	print V , '\n'
-#	print D , '\n'
+	ratio = float(X.shape[1])/num_of_columns
+	estimated_eig_value = ratio*D[0:return_rank]
+	print estimated_eig_value
+
+	#print W , '\n'
+	#print V , '\n'
+	#print D , '\n'
+	#print V.dot(np.diag(D)).dot(V.T)
 
 #	output = {}
 #	output['W'] = W
@@ -38,14 +45,30 @@ def nystrom(X, sampling_percentage):
 
 
 if __name__ == '__main__':
+	def eig_sorted(X):
+		D,V = np.linalg.eig(X)	
+		lastV = None
+		sort_needed = False
+		for m in D:
+			if m > lastV and lastV != None:
+				sort_needed = True
+			lastV = m
+		
+		if sort_needed:
+			idx = D.argsort()[::-1]   
+			D = D[idx]
+			V = V[:,idx]	
+	
+		return [V,D] 
+
 	#	print setting
 	np.set_printoptions(suppress=True)
 	np.set_printoptions(precision=5)
 	np.set_printoptions(linewidth=900)
 
 	#	program settings
-	desired_rank = 2
-	example_size = 100
+	desired_rank = 5
+	example_size = 1000
 
 	#	-------------------------
 	X = np.random.normal(size=(example_size, example_size))
@@ -55,7 +78,7 @@ if __name__ == '__main__':
 	noise = np.diag(np.random.normal(scale=0.0001, size=(example_size)))
 	M = eigVecs.dot(eigVals).dot(eigVecs.T) + noise
 
-	nystrom(M, 0.8)
+	nystrom(M, desired_rank, 0.4)
 
 
 #	U,Se,V1 = nystrom(X, desired_rank, num_of_random_column)
