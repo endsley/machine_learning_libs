@@ -4,11 +4,15 @@ import numpy as np
 
 def svd_sorted(X):
 	U,S,V = np.linalg.svd(X)	
+	lastV = None
+	for m in S:
+		if lastV == None:
+			lastV = m
+		else:
 
-	[i, d] = np.argsort(S)
-	print S ,'\n'
-	print i ,'\n'
-	print d ,'\n'
+	print np.argsort(S)[::-1]
+#	print i ,'\n'
+#	print d ,'\n'
 
 #	print U ,'\n'
 #	print S ,'\n'
@@ -17,5 +21,6 @@ def svd_sorted(X):
 if __name__ == '__main__':
 	from random_matrix import *
 	M = random_matrix(2, 5)
+	M = np.random.normal(size=(30,30))
 	svd_sorted(M)
 	
