@@ -3,24 +3,38 @@
 import numpy as np
 
 def svd_sorted(X):
-	U,S,V = np.linalg.svd(X)	
+	D,V = np.linalg.eig(X)	
 	lastV = None
-	for m in S:
-		if lastV == None:
-			lastV = m
-		else:
+	sort_needed = False
+	for m in D:
+		if m > lastV and lastV != None:
+			sort_needed = True
+			print 'Sort needed : \t' , m, lastV
+		lastV = m
+	
+	if sort_needed:
+		idx = D.argsort()[::-1]   
+		D = D[idx]
+		V = V[:,idx]	
 
-	print np.argsort(S)[::-1]
-#	print i ,'\n'
-#	print d ,'\n'
-
-#	print U ,'\n'
-#	print S ,'\n'
-#	print V ,'\n'
+	return [V,D] 
 
 if __name__ == '__main__':
 	from random_matrix import *
 	M = random_matrix(2, 5)
-	M = np.random.normal(size=(30,30))
-	svd_sorted(M)
+	[V,D] = svd_sorted(M)
+	
+	print 'V : \n' , V , '\n'
+	print 'D : \n' , D , '\n'
+	print 'M : \n' , M , '\n'
+
+	print M
+	#print V.dot(D).dot(V.T)
+	print '\n'
+	print V.dot(np.diag(D)).dot(V.T)
+
+#	print '\n'
+#	print V
+#	print '\n'
+#	print D
 	
