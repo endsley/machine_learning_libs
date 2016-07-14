@@ -1,46 +1,61 @@
 #!/usr/bin/python
 
-from numpy import *
+import numpy as np
 
 #	X must be positive semidefinite, if not, u must use column sampling on svd
 #	sampling_percentage is between 0 to 1
+#	note that X3 = [W G21.T; G21 G22]
 def nystrom(X, sampling_percentage):
 	p = sampling_percentage
-	print floor(p*X.shape[1])
+	num_of_columns = np.floor(p*X.shape[1])
+	rp = np.random.permutation(X.shape[1])
 
-#	if rank + num_of_random_column > X.shape[1]:
-#		num_of_random_column = X.shape[1] - rank
+	rc = rp[num_of_columns:]	#	residual columns
+	rp = rp[0:num_of_columns]	#	random permutation
+
+	X2 = np.hstack((X[:,rp], X[:,rc]))		#	restack horizontally
+	X3 = np.vstack((X2[rp,:], X2[rc,:]))	#	restack vertically
+
+	W = X3[0:num_of_columns, 0:num_of_columns]
+	G21 = X3[num_of_columns:, 0:num_of_columns]
+	G22 = X3[num_of_columns:, num_of_columns:]
+
+	[V,D] = np.linalg.eig(W)
+
+	print V , '\n'
+#	print D , '\n'
+
+#	output = {}
+#	output['W'] = W
+#	output['G21'] = G21
+#	output['G22'] = G22
 #
-#	random_matrix = random.normal(size=(X.shape[1], num_of_random_column))
-#	omega, r = linalg.qr(random_matrix, mode='reduced')
-#	X_hat = X.dot(X.T)
+#	print 'X : \n' , X3
+#	print 'W : \n' , W
+#	print 'G21 : \n', G21
+#	print 'G22 : \n' , G22
 #
-#	Q, R = linalg.qr(X_hat.dot(X_hat).dot(X).dot(omega), mode='reduced')
-#	smaller_matrix = Q.T.dot(X)
-#	U,S,V = linalg.svd(smaller_matrix)
-#	U = Q.dot(U)
-#
-#	return U,S,V
+
 
 if __name__ == '__main__':
 	#	print setting
-	set_printoptions(suppress=True)
-	set_printoptions(precision=5)
-	set_printoptions(linewidth=900)
+	np.set_printoptions(suppress=True)
+	np.set_printoptions(precision=5)
+	np.set_printoptions(linewidth=900)
 
 	#	program settings
 	desired_rank = 2
-	example_size = 10
+	example_size = 100
 
 	#	-------------------------
-	X = random.normal(size=(example_size, example_size))
-	Q,R = linalg.qr(X, mode='reduced')
+	X = np.random.normal(size=(example_size, example_size))
+	Q,R = np.linalg.qr(X, mode='reduced')
 	eigVecs = Q[:,0:desired_rank]
-	eigVals = diag(array(range(desired_rank)) + 1)
-	noise = diag(random.normal(scale=0.0001, size=(example_size)))
+	eigVals = np.diag(np.array(range(desired_rank)) + 1)
+	noise = np.diag(np.random.normal(scale=0.0001, size=(example_size)))
 	M = eigVecs.dot(eigVals).dot(eigVecs.T) + noise
 
-	nystrom(M, 0.5)
+	nystrom(M, 0.8)
 
 
 #	U,Se,V1 = nystrom(X, desired_rank, num_of_random_column)
