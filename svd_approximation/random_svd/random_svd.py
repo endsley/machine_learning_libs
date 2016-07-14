@@ -2,6 +2,11 @@
 
 from numpy import *
 
+#	Input
+#	X is the data matrix itself
+#	rank is the expected number of eigen values
+#	num_of_random_column is the number of random vectors to project down to
+
 def random_svd(X, rank, num_of_random_column):
 	
 	if rank + num_of_random_column > X.shape[1]:
