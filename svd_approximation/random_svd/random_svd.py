@@ -29,9 +29,9 @@ if __name__ == '__main__':
 	set_printoptions(precision=3)
 
 	#	program settings
-	desired_rank = 2
+	desired_rank = 5
 	num_of_random_column = 40
-	example_size = 100
+	example_size = 2000
 
 	#	-------------------------
 	X = random.normal(size=(example_size, example_size))
