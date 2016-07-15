@@ -1,7 +1,7 @@
 #!/usr/bin/python
 
 import numpy as np
-
+#	Note : the sample should be thousands before it start getting accurate
 
 #	X must be positive semidefinite, if not, u must use column sampling on svd
 #	sampling_percentage is between 0 to 1
@@ -24,40 +24,21 @@ def nystrom(X, return_rank, sampling_percentage):
 	[V,D] = eig_sorted(W)
 
 	ratio = float(X.shape[1])/num_of_columns
-	estimated_eig_value = ratio*D[0:return_rank]
-	print estimated_eig_value
+	estimated_eig_value = ratio*D[0:return_rank]	
+	bottom_estimate = G21.dot(V).dot(np.linalg.inv(np.diag(D)))
+	eigVector = np.vstack((V,bottom_estimate))
+	eigVector = eigVector[:,0:num_of_columns]
 
-	#print W , '\n'
-	#print V , '\n'
-	#print D , '\n'
-	#print V.dot(np.diag(D)).dot(V.T)
-
-#	output = {}
-#	output['W'] = W
-#	output['G21'] = G21
-#	output['G22'] = G22
-#
-#	print 'X : \n' , X3
-#	print 'W : \n' , W
-#	print 'G21 : \n', G21
-#	print 'G22 : \n' , G22
-#
+	eigVector = eigVector / np.linalg.norm(eigVector, axis=0)[np.newaxis]
+	return [eigVector, estimated_eig_value]
 
 
 if __name__ == '__main__':
 	def eig_sorted(X):
 		D,V = np.linalg.eig(X)	
-		lastV = None
-		sort_needed = False
-		for m in D:
-			if m > lastV and lastV != None:
-				sort_needed = True
-			lastV = m
-		
-		if sort_needed:
-			idx = D.argsort()[::-1]   
-			D = D[idx]
-			V = V[:,idx]	
+		idx = D.argsort()[::-1]   
+		D = D[idx]
+		V = V[:,idx]	
 	
 		return [V,D] 
 
@@ -67,37 +48,51 @@ if __name__ == '__main__':
 	np.set_printoptions(linewidth=900)
 
 	#	program settings
-	desired_rank = 5
-	example_size = 1000
+	desired_rank = 3
+	example_size = 300
 
-	#	-------------------------
+
+#	#	Run without nystrom
+#	X = np.random.normal(size=(example_size, example_size))
+#	Q,R = np.linalg.qr(X, mode='reduced')
+#	eigVecs = Q[:,0:desired_rank]
+#	eigVals = np.diag(np.array(range(desired_rank)) + 1)
+#	noise = np.diag(np.random.normal(scale=0.0001, size=(example_size)))
+#	M = eigVecs.dot(eigVals).dot(eigVecs.T) + noise
+#
+#	[V,D] = eig_sorted(M)
+#	print D[0:desired_rank]
+
+
+	#	Run with Nystrom
+	total = np.zeros(desired_rank)
+	avg_amount = 5
+
 	X = np.random.normal(size=(example_size, example_size))
 	Q,R = np.linalg.qr(X, mode='reduced')
 	eigVecs = Q[:,0:desired_rank]
 	eigVals = np.diag(np.array(range(desired_rank)) + 1)
 	noise = np.diag(np.random.normal(scale=0.0001, size=(example_size)))
 	M = eigVecs.dot(eigVals).dot(eigVecs.T) + noise
+	
+	#for m in range(avg_amount):
+	[V,D] = nystrom(M, desired_rank, 0.50)
+	print D[0:desired_rank]
 
-	nystrom(M, desired_rank, 0.4)
+	#total += D[0:desired_rank]
 
-
-#	U,Se,V1 = nystrom(X, desired_rank, num_of_random_column)
-#	U1 = U[0:10, 0:desired_rank]
+#	[newV, newD] = eig_sorted(M)
 #
-#
-#	U,S,V2 = linalg.svd(X)
-#	U2 = U[0:10, 0:desired_rank]
-#
-#	print 'Estimated Eigen Values : \n' , Se[0:desired_rank]
-#	print 'Real Eigen Values : \n' , S[0:desired_rank] , '\n'
-#	print 'Estimated U : '
-#	print U1 , '\n'
-#	print 'Real U : '
-#	print U2 , '\n'
-#	print 'Estimated V : '
-#	print V1 , '\n'
-#	print 'Real V : '
-#	print V2 , '\n'
+#	print V[:,0][0:20]
+#	print newV[:,0][0:20]
+#	print D[0:desired_rank]
+#	print newD[0:desired_rank]
 
+#	avg = total/float(avg_amount)
+#	print '----------- Final -------\n'
+#	print avg
+
+
+#	print V.shape
 
 
