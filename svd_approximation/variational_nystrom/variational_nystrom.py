@@ -10,10 +10,10 @@ import numpy as np
 def nystrom(X, return_rank, sampling_percentage):
 	p = sampling_percentage
 	num_of_columns = np.floor(p*X.shape[1])
-	rp = np.random.permutation(X.shape[1])
+	Mp = np.random.permutation(X.shape[1])
 
-	rc = rp[num_of_columns:]	#	residual columns
-	rp = rp[0:num_of_columns]	#	random permutation
+	rc = Mp[num_of_columns:]	#	residual columns
+	rp = Mp[0:num_of_columns]	#	random permutation
 
 	X2 = np.hstack((X[:,rp], X[:,rc]))		#	restack horizontally
 	X3 = np.vstack((X2[rp,:], X2[rc,:]))	#	restack vertically
@@ -22,22 +22,36 @@ def nystrom(X, return_rank, sampling_percentage):
 	G21 = X3[num_of_columns:, 0:num_of_columns]
 	G22 = X3[num_of_columns:, num_of_columns:]
 	C = np.vstack( (W,G21) )
-
+	D = np.vstack( (G21.T, G22) )
+	E = np.hstack( (C,D) )
 
 	#	Now we solve for generalized eigenproblem AV= BV Lambda
 	B = W.dot(W) + G21.T.dot(G21)
 	A = (B.dot(W) + (G21.T.dot(G21).dot(W)).T + G21.T.dot(G22).dot(G21))
 
 	[D,V] = eigh(A, B)
+
 	U = np.fliplr(V)
 	D = np.flipud(D)
 
+	nV = C.dot(U)
+	pV = np.zeros( nV.shape )
 
-	nV = C.dot(V)
-	#for m in range(nV.shape[1]): nV[:,m] = nV[:,m]/np.linalg.norm(nV[:,m])
-
+	pV[Mp,:] = nV
 	print nV , '\n\n'
-	print D , '\n\n'
+	print pV , '\n\n'
+	
+
+
+
+
+#	nV = C.dot(U)
+#	#for m in range(nV.shape[1]): nV[:,m] = nV[:,m]/np.linalg.norm(nV[:,m])
+#	#D = np.diag(D)
+#
+#	print nV , '\n\n'
+#	print '\n\n'
+#	print D, '\n\n'
 
 
 	[D,V] = eigh(X)
@@ -74,8 +88,8 @@ if __name__ == '__main__':
 	np.set_printoptions(linewidth=900)
 
 	#	program settings
-	desired_rank = 3
-	example_size = 8
+	desired_rank = 2
+	example_size = 7
 
 
 #	#	Run without nystrom
@@ -100,8 +114,11 @@ if __name__ == '__main__':
 	eigVals = np.diag(np.array(range(desired_rank)) + 1)
 	noise = np.diag(np.random.normal(scale=0.0001, size=(example_size)))
 	M = eigVecs.dot(eigVals).dot(eigVecs.T) + noise
-	
-	print eigVals
+
+#	print 'Real ones'
+#	print M , '\n\n'
+#	print eigVecs, '\n\n'
+#	print eigVals, '\n------------\n'
 
 	#for m in range(avg_amount):
 	nystrom(M, desired_rank, 0.50)
