@@ -2,12 +2,14 @@
 
 from scipy.linalg import eigh
 import numpy as np
+import time
+
 #	Note : the sample should be thousands before it start getting accurate
 
 #	X must be positive semidefinite, if not, u must use column sampling on svd
 #	sampling_percentage is between 0 to 1
 #	note that X3 = [W G21.T; G21 G22]
-def nystrom(X, return_rank, sampling_percentage):
+def variational_nystrom(X, return_rank, sampling_percentage):
 	p = sampling_percentage
 	num_of_columns = np.floor(p*X.shape[1])
 	Mp = np.random.permutation(X.shape[1])
@@ -38,39 +40,11 @@ def nystrom(X, return_rank, sampling_percentage):
 	pV = np.zeros( nV.shape )
 
 	pV[Mp,:] = nV
-	print nV , '\n\n'
-	print pV , '\n\n'
+#	print nV , '\n\n'
+#	print pV , '\n\n'
 	
 
 
-
-
-#	nV = C.dot(U)
-#	#for m in range(nV.shape[1]): nV[:,m] = nV[:,m]/np.linalg.norm(nV[:,m])
-#	#D = np.diag(D)
-#
-#	print nV , '\n\n'
-#	print '\n\n'
-#	print D, '\n\n'
-
-
-	[D,V] = eigh(X)
-	V = np.fliplr(V)
-	D = np.flipud(D)
-
-	print V , '\n\n'
-	print D , '\n\n'
-	import pdb; pdb.set_trace()
-
-
-
-#	estimated_eig_value = ratio*D[0:return_rank]	
-#	bottom_estimate = G21.dot(V).dot(np.linalg.inv(np.diag(D)))
-#	eigVector = np.vstack((V,bottom_estimate))
-#	eigVector = eigVector[:,0:num_of_columns]
-#
-#	eigVector = eigVector / np.linalg.norm(eigVector, axis=0)[np.newaxis]
-#	return [eigVector, estimated_eig_value]
 
 
 if __name__ == '__main__':
@@ -88,8 +62,8 @@ if __name__ == '__main__':
 	np.set_printoptions(linewidth=900)
 
 	#	program settings
-	desired_rank = 2
-	example_size = 7
+	desired_rank = 3
+	example_size = 1000 
 
 
 #	#	Run without nystrom
@@ -115,14 +89,13 @@ if __name__ == '__main__':
 	noise = np.diag(np.random.normal(scale=0.0001, size=(example_size)))
 	M = eigVecs.dot(eigVals).dot(eigVecs.T) + noise
 
-#	print 'Real ones'
-#	print M , '\n\n'
-#	print eigVecs, '\n\n'
-#	print eigVals, '\n------------\n'
+	#print eigVecs, '\n\n'
+	#print eigVals, '\n------------\n'
 
-	#for m in range(avg_amount):
-	nystrom(M, desired_rank, 0.50)
+	print 'start'
+	start = time.time()
+	variational_nystrom(M, desired_rank, 0.30)
+	end = time.time()
 
-	#[V,D] = nystrom(M, desired_rank, 0.10)
-	#print D[0:desired_rank]
+	print(end - start)
 
