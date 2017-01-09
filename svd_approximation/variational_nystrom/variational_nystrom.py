@@ -37,11 +37,11 @@ def variational_nystrom(X, return_rank, sampling_percentage):
 	D = np.flipud(D)
 
 	nV = C.dot(U)
-	pV = np.zeros( nV.shape )
+	eigenVector = np.zeros( nV.shape )
 
-	pV[Mp,:] = nV
-#	print nV , '\n\n'
-#	print pV , '\n\n'
+	eigenVector[Mp,:] = nV
+
+	return [eigenVector, D]
 	
 
 
@@ -63,7 +63,7 @@ if __name__ == '__main__':
 
 	#	program settings
 	desired_rank = 3
-	example_size = 1000 
+	example_size = 100
 
 
 #	#	Run without nystrom
@@ -89,13 +89,23 @@ if __name__ == '__main__':
 	noise = np.diag(np.random.normal(scale=0.0001, size=(example_size)))
 	M = eigVecs.dot(eigVals).dot(eigVecs.T) + noise
 
-	#print eigVecs, '\n\n'
-	#print eigVals, '\n------------\n'
-
-	print 'start'
 	start = time.time()
-	variational_nystrom(M, desired_rank, 0.30)
-	end = time.time()
+	[U,S,V] = np.linalg.svd(M)
+	print("--- SVD Time : %s seconds ---" % (time.time() - start))
 
-	print(end - start)
+	start = time.time()
+	[estimated_V,estimated_D] = variational_nystrom(M, desired_rank, 0.30)
+	print("--- V Nystrom Time : %s seconds ---\n\n" % (time.time() - start))
+
+
+
+
+	print 'True Eig Value and Vectors : '
+	print eigVecs[0:5,0:desired_rank], '\n\n'
+	print np.diag(eigVals), '\n------------\n'
+
+
+	print 'Estimated Eig Value and Vectors : '
+	print estimated_V[0:5,0:desired_rank], '\n\n'
+	print estimated_D[0:desired_rank], '\n------------\n'
 
