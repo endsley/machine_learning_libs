@@ -1,0 +1,12 @@
+*.pyc
+scratch/
+examples/data
+.idea/
+.DS_Store
+build/
+data/
+dist/
+MANIFEST
+*.so
+*.c
+autograd.egg-info/
