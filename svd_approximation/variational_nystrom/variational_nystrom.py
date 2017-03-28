@@ -63,7 +63,7 @@ if __name__ == '__main__':
 
 	#	program settings
 	desired_rank = 3
-	example_size = 100
+	example_size = 20
 
 
 #	#	Run without nystrom
@@ -96,8 +96,6 @@ if __name__ == '__main__':
 	start = time.time()
 	[estimated_V,estimated_D] = variational_nystrom(M, desired_rank, 0.30)
 	print("--- V Nystrom Time : %s seconds ---\n\n" % (time.time() - start))
-
-
 
 
 	print 'True Eig Value and Vectors : '
