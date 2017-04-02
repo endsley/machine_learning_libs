@@ -69,7 +69,7 @@ def nystrom(X, return_rank, sampling_percentage):
 if __name__ == '__main__':
 
 	desired_rank = 5
-	example_size = 10000
+	example_size = 100
 
 	X = np.random.normal(size=(example_size, example_size))
 	Q,R = np.linalg.qr(X, mode='reduced')
@@ -79,7 +79,12 @@ if __name__ == '__main__':
 	M = eigVecs.dot(eigVals).dot(eigVecs.T) + noise
 	
 	#for m in range(avg_amount):
-	[V,D] = nystrom(M, desired_rank, 0.60)
+	[V,D] = nystrom(M, desired_rank, 0.90)
 
-	print D[0:desired_rank]
+	print eigVecs
+	print eigVals
+	print '-----------'
+	print V , '\n'
+	print D
+	#print D[0:desired_rank]
 

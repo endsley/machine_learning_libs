@@ -30,8 +30,8 @@ if __name__ == '__main__':
 
 	#	program settings
 	desired_rank = 5
-	num_of_random_column = 40
-	example_size = 2000
+	num_of_random_column = 10
+	example_size = 20
 
 	#	-------------------------
 	X = random.normal(size=(example_size, example_size))

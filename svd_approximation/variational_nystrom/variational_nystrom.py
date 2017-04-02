@@ -38,8 +38,14 @@ def variational_nystrom(X, return_rank, sampling_percentage):
 
 	nV = C.dot(U)
 	eigenVector = np.zeros( nV.shape )
-
 	eigenVector[Mp,:] = nV
+
+
+	##	Sort them
+	#idx = D.argsort()[::-1]   
+	#D = D[idx]
+	#eigenVector = eigenVector[:,idx]	
+
 
 	return [eigenVector, D]
 	

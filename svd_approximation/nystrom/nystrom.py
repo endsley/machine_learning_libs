@@ -49,7 +49,7 @@ if __name__ == '__main__':
 
 	#	program settings
 	desired_rank = 5
-	example_size = 2000
+	example_size = 100
 
 
 #	#	Run without nystrom
