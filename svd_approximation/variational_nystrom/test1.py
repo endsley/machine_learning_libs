@@ -12,7 +12,8 @@ np.set_printoptions(linewidth=900)
 example_size = 20
 
 Q,R = np.linalg.qr( np.random.normal(size=(example_size, example_size)) , mode='reduced')
-eigValues = np.diag(np.sort(np.random.randn(example_size)))
+eigValues = np.diag(np.sort(np.random.rand(example_size)))
+eigValues = np.power(eigValues,10)
 noise = np.diag(np.random.normal(scale=0.0001, size=(example_size)))
 M = Q.dot(eigValues).dot(Q.T) + noise
 
