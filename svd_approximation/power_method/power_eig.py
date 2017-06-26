@@ -100,11 +100,11 @@ if __name__ == "__main__":
 
 
 	print 'Time difference '
-	A = np.random.randn(400,400)
+	A = np.random.randn(500,500)
 	A = A.dot(A.T)
 
 	start_time = time.time() 
-	[eigVects, eigValues] = power_eig(A,2, accuracy=0.00001)
+	[eigVects, eigValues] = power_eig(A,5, accuracy=0.00001)
 	print("Power Method : %s seconds ---" % (time.time() - start_time))
 
 	start_time = time.time() 
