@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 
 import numpy as np
 import time 
@@ -45,7 +45,7 @@ def power_eig(B, num_eigs, accuracy=0.0001, direction='largest first'): # direct
 	
 
 	if direction == 'smallest first':
-		N = np.abs(np.max(B))
+		N = np.linalg.norm(B,1)
 		X = N*np.eye(d) - B
 		
 		for e in range(num_eigs):
