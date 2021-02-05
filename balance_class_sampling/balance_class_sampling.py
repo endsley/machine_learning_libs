@@ -4,6 +4,7 @@ import numpy as np
 import sys
 from numpy import genfromtxt
 from sklearn.utils import shuffle
+from sklearn.preprocessing import OneHotEncoder
 
 
 np.set_printoptions(precision=4)
@@ -19,15 +20,23 @@ class balance_class_sampling:
 		self.d = X.shape[1]
 		self.n = X.shape[0]
 
+		if type(Y) == type([]): self.Y = np.array(Y)
+		self.Y = np.reshape(self.Y,(len(Y),1))
+		self.Yₒ = OneHotEncoder(categories='auto', sparse=False).fit_transform(self.Y)
+		self.c = self.Yₒ.shape[1]
+
 		self.X_list = {}
 		self.X_shuffled = {}
 		self.Y_list = {}
+		self.Yₒ_list = {}
 
 		self.l = np.unique(Y)
 		for i in self.l:
 			indices = np.where(Y == i)[0]
 			self.X_list[i] = X[indices, :]
-			self.Y_list[i] = Y[indices]
+			self.Y_list[i] = self.Y[indices]
+			self.Yₒ_list[i] = self.Yₒ[indices, :]
+
 			self.X_shuffled[i] = shuffle(self.X_list[i])		
 
 		#for each class, gen a new X[]
@@ -55,15 +64,18 @@ class balance_class_sampling:
 
 
 		Xout = np.empty((0, self.d))	
-		Yout = np.empty((0))	
+		Yout = np.empty((0,1))	
+		Yₒout = np.empty((0, self.c))	
+
 		for i in self.l:
 			newX = self.X_shuffled[i][0:samples_per_class, :]
 			self.X_shuffled[i] = self.X_shuffled[i][samples_per_class:, :]
 
 			Xout = np.vstack((Xout, newX))
-			Yout = np.hstack((Yout, self.Y_list[i][0:samples_per_class]))
+			Yout = np.vstack((Yout, self.Y_list[i][0:samples_per_class]))
+			Yₒout = np.vstack((Yₒout, self.Yₒ_list[i][0:samples_per_class, :]))
 
-		return Xout, Yout
+		return Xout, Yout, Yₒout
 
 
 
@@ -76,8 +88,7 @@ if __name__ == '__main__':
 
 	BCS = balance_class_sampling(X,Y)
 	for i in range(20):
-		[Xout, Yout] = BCS.sample(samples_per_class=2)
-		#print([Xout, Yout])
-		print(Xout)
+		[Xout, Yout, Yₒout] = BCS.sample(samples_per_class=3)
+		print(Xout, '\n--------------\n', Yₒout, '\n\n')
 
 
