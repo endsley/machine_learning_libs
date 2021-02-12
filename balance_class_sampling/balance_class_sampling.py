@@ -43,6 +43,7 @@ class balance_class_sampling:
 		#each time we sample, we pick a subset from each class 
 		#combine the subset into 1 X and 1 Y, output that subset
 
+
 	def sample(self, samples_per_class=10):
 		if samples_per_class > self.n:
 			print('Error : Your batch size is more than the number of samples\n')
