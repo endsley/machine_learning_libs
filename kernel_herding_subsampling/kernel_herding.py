@@ -4,6 +4,7 @@ import numpy as np
 import sklearn.metrics
 from numpy import genfromtxt
 from sort_samples_into_classes import *
+from kernel_herding_debug import *
 from RFF import *
 
 np.set_printoptions(precision=4)
@@ -16,8 +17,12 @@ np.set_printoptions(suppress=True)
 
 class kernel_herding:
 	# sample_num, the larger the better approximation
-	def __init__(self, X, Y):
+	def __init__(self, X, Y, debug_mode=False):
+		self.debug_mode = debug_mode
+		self.kH_debug = kernel_herding_debug(self)
+
 		self.n = X.shape[0]
+		self.d = X.shape[1]
 		self.X = X
 		self.Y = Y
 
@@ -45,8 +50,9 @@ class kernel_herding:
 			self.sSamples.subSamples[i] = ẋ[0:10,:]
 
 
-	def obtain_subsamples(self):
+	def obtain_subsamples(self, exit_threshold=0.0025):
 		for j in range(self.n):
+			oldError = 0
 			for i in self.l:
 				ẋ = self.sSamples.shuffled_X[i]
 				n = self.sSamples.subSamples_in_RKHS[i].shape[0]
@@ -59,14 +65,18 @@ class kernel_herding:
 	
 				newError = np.min(ε)
 				minIndex = np.argmin(ε)
+
+				if newError > oldError: oldError = newError
 	
 				self.sSamples.subSamples_in_RKHS[i] = np.vstack((self.sSamples.subSamples_in_RKHS[i], np.atleast_2d(Φx[minIndex])))
-				self.sSamples.subSamples[i] = np.vstack((self.sSamples.subSamples[i], np.atleast_2d(ẋ[170,:])))
-				print(newError)
-	
-			print(j, '\n')
-				#np.linalg.norm(μ - (μᵃᵖᵖ + Φx)/(n+1), axis=1)
+				self.sSamples.subSamples[i] = np.vstack((self.sSamples.subSamples[i], np.atleast_2d(ẋ[minIndex,:])))
+				self.kH_debug.save_results(oldError)
 
+			if oldError < exit_threshold: break
+			print('\n')
+
+		return self.sSamples.subSamples[i]
+		import pdb; pdb.set_trace()	
 
 if __name__ == "__main__":
 	#X = np.array([[1,1],[2,2],[3,3],[4,4],[5,5],[6,6],[7,7],[8,8],[9,9],[10,10]])
@@ -74,6 +84,6 @@ if __name__ == "__main__":
 	X = genfromtxt('../datasets/moon.csv', delimiter=',')
 	Y = genfromtxt('../datasets/moon_label.csv', delimiter=',')
 
-	kh = kernel_herding(X,Y)
+	kh = kernel_herding(X,Y, debug_mode=True)
 	kh.obtain_subsamples()
 
