@@ -2,6 +2,7 @@
 
 import numpy as np
 import sklearn.metrics
+import numpy.matlib
 import torch
 from torch.autograd import Variable
 import torch.nn.functional as F
@@ -16,7 +17,7 @@ class RFF:
 		self.sample_num = sample_num
 		self.phase_shift = None
 
-	def initialize_RFF(self, x, sigma, output_torch, dtype):
+	def initialize_RFF(self, x, sigma, output_torch=False, dtype=torch.FloatTensor):
 		self.x = x
 		self.N = x.shape[0]
 		self.d = x.shape[1]
@@ -85,22 +86,33 @@ class RFF:
 
 if __name__ == "__main__":
 	np.set_printoptions(precision=4)
-	np.set_printoptions(threshold=np.nan)
 	np.set_printoptions(linewidth=300)
 	np.set_printoptions(suppress=True)
 
 	X = np.random.randn(5,2)
-	sigma = 1
-	gamma = 1.0/(2*sigma*sigma)
+	σ = 1
+	gamma = 1.0/(2*σ*σ)
 
+	# Version 1				# Obtain the Φ(X) in np 
 	rff = RFF(30000)
-	rbf_np = rff.get_rbf(X, sigma)
+	rff.initialize_RFF(X,σ)
+	Xᵣ = rff.np_feature_map(X)
+	rbf_inner = Xᵣ.dot(Xᵣ.T)
 
+	# Version 2				# Obtain K directly in np
+	rbf_np = rff.get_rbf(X, σ)
+
+	# Version 3
 	rff2 = RFF(30000)
-	rbf_torch = rff2.get_rbf(X, sigma, True)
+	rbf_torch = rff2.get_rbf(X, σ, True)
+	rbf_torch = rbf_torch.detach().cpu().numpy()
 
+	# Version 4
 	sk_rbf = sklearn.metrics.pairwise.rbf_kernel(X, gamma=gamma)
 
+
+	print(rbf_inner)
+	print('\n')
 	print(rbf_torch)
 	print('\n')
 	print(rbf_np)

@@ -3,6 +3,7 @@
 
 import numpy as np
 import sklearn.metrics
+from sklearn.utils import shuffle
 from sklearn.preprocessing import OneHotEncoder
 
 
