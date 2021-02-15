@@ -13,7 +13,7 @@ np.set_printoptions(suppress=True)
 
 
 #	Written by Chieh Wu
-#	This function calculates the Gaussian Kernel by approximate it through Random fourier Feature technique.
+#	This function finds a subset of samples that represents the total via kernel herding
 
 class kernel_herding:
 	# sample_num, the larger the better approximation
@@ -77,7 +77,6 @@ class kernel_herding:
 				self.sSamples.class_Φx[i] = np.delete(self.sSamples.class_Φx[i], minIndex, axis=0)
 				self.sSamples.shuffled_X[i] = np.delete(self.sSamples.shuffled_X[i], minIndex, axis=0)
 
-
 			self.kH_debug.save_results(oldError)
 			if oldError < exit_threshold: break
 
@@ -88,7 +87,7 @@ class kernel_herding:
 		subSample = np.empty((0, self.d))
 		subLabels = np.empty((0, 1))
 		for i in self.l:
-			ẋ = self.sSamples.subSamples[i]
+			ẋ = np.unique(self.sSamples.subSamples[i], axis=0)
 
 			subSample = np.vstack((subSample, ẋ))
 			subLabels = np.vstack((subLabels, self.sSamples.Y_list[i][0:ẋ.shape[0], :]))
@@ -98,16 +97,19 @@ class kernel_herding:
 	def obtain_residual_samples(self):
 		[subSample, subLabels] = self.combine_subSamples()
 
+		delete_index_list = []
 		for i in range(subSample.shape[0]):
 			V = (subSample[i,:] == self.X).astype(int)	
 			loc = np.prod(V, axis=1)
 			if np.sum(loc) == 0: import pdb; pdb.set_trace()
 			if np.sum(loc) > 1: import pdb; pdb.set_trace()
 			ind = np.where(loc == 1)[0][0]
-	
-			self.X = np.delete(self.X, ind, axis=0)
-			self.Y = np.delete(self.Y, ind, axis=0)
-			
+			delete_index_list.append(ind)
+
+
+		self.X = np.delete(self.X, delete_index_list, axis=0)
+		self.Y = np.delete(self.Y, delete_index_list, axis=0)
+
 		return self.X, self.Y
 
 
