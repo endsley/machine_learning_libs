@@ -14,7 +14,7 @@ import matplotlib.pyplot as plt
 
 
 def cluster_plot(X, Y, title=None, save_path=None):
-	cmap = ['b', 'g', 'r', 'c', 'm', 'y','k']
+	cmap = ['b', 'g', 'k', 'y','m', 'c', 'r']
 	labels = np.unique(Y)
 	if len(labels) > 7:
 		print('Error : The plot can currently only handle at most 7 classes')

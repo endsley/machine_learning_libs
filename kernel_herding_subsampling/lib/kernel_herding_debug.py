@@ -20,6 +20,8 @@ class kernel_herding_debug:
 		remove_files('./results/' + self.kh.data_name + '/sample_growth/')
 
 	def collect_result(self, n):
+		if self.kh.debug_mode == False: return
+
 		merged_result = './results/' + self.kh.data_name + '/merged_results.gif'
 		merged_resultF = './results/' + self.kh.data_name + '/merged_results_fast.gif'
 		imgList = []
@@ -33,11 +35,18 @@ class kernel_herding_debug:
 		gif_from_img(imgList, merged_result, 2)
 		gif_from_img(imgList, merged_resultF, 0.1)
 
-		Xaxis = np.arange(1, len(self.worst_error_trajectory)+1)
+		sn = len(self.worst_error_trajectory)
+		Xaxis = np.arange(1, sn+1)
 		Yaxis = np.array(self.worst_error_trajectory)
 
 		title = 'subSample size Vs $L_{\infty}$ MMD error'
-		textstr = '\n'.join(( r'Init MMD=%.4f$' % (self.worst_error_trajectory[0], ), r'Last MMD=%.4f$' % (self.worst_error_trajectory[-1])))
+		msg1 = r'Init MMD=%.4f$' % (self.worst_error_trajectory[0], )
+		msg2 = r'Last MMD=%.4f$' % (self.worst_error_trajectory[-1])
+		msg3 = r'N=%d$' % (n, )
+		msg4 = r'n=%d$' % (sn, )
+		msg5 = r'Percentage=%.3f$' % (float(sn)/n, )
+
+		textstr = '\n'.join((msg1, msg2, msg3, msg4, msg5))
 		outp = './results/' + self.kh.data_name + '/mmd_trajectory.png'
 
 		lp = line_plot(title_font=13, xfont=13, yfont=13)

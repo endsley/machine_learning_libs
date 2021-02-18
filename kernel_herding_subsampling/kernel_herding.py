@@ -4,8 +4,10 @@ import numpy as np
 import sklearn.metrics
 from numpy import genfromtxt
 from lib.sort_samples_into_classes import *
+from sklearn.metrics.cluster import normalized_mutual_info_score
 from lib.kernel_herding_debug import *
 from lib.RFF import *
+from sklearn import svm
 
 np.set_printoptions(precision=4)
 np.set_printoptions(linewidth=300)
@@ -115,14 +117,26 @@ class kernel_herding:
 
 
 if __name__ == "__main__":
-	data_name = 'moon'
+	#data_name = 'moon'
+	data_name = 'spiral'
 
 	#X = np.array([[1,1],[2,2],[3,3],[4,4],[5,5],[6,6],[7,7],[8,8],[9,9],[10,10]])
 	#Y = np.array([0,0,0,0,0,1,1,1,1,1])
 	X = genfromtxt('../datasets/' + data_name + '.csv', delimiter=',')
 	Y = genfromtxt('../datasets/' + data_name + '_label.csv', delimiter=',')
 
-	kh = kernel_herding(X,Y, debug_mode=True, data_name=data_name)
-	[ẋ, ӯ] = kh.obtain_subsamples(exit_threshold=0.004)
+	kh = kernel_herding(X,Y, debug_mode=False, data_name=data_name)
+	[ẋ, ӯ] = kh.obtain_subsamples(exit_threshold=0.003)
 	[Ẋ, Ý] = kh.obtain_residual_samples()
+
+
+	#	Test to see if classification on subset yield good results on the rest of the data
+	regr = svm.SVC()
+	regr.fit(ẋ, ӯ)
+	train_labels = regr.predict(ẋ)
+	test_labels = regr.predict(Ẋ)
+
+	train_nmi = normalized_mutual_info_score(train_labels, np.squeeze(ӯ))
+	test_nmi = normalized_mutual_info_score(test_labels, np.squeeze(Ý))
+	print('Train nmi = %.3f, Test nmi = %.3f'%(train_nmi, test_nmi))
 	import pdb; pdb.set_trace()
