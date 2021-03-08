@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import numpy as np
+import numpy.matlib
 import sklearn.metrics
 import torch
 from torch.autograd import Variable
@@ -44,7 +45,7 @@ class RFF:
 		self.rand_proj = torch.from_numpy(self.rand_proj)
 		self.rand_proj = Variable(self.rand_proj.type(dtype), requires_grad=False)
 
-	def torch_rbf(self):
+	def __call__(self):
 		self.xTor = self.x
 		if type(self.x) == np.ndarray:
 			self.xTor = torch.from_numpy(self.x)
@@ -55,6 +56,20 @@ class RFF:
 
 
 		P = torch.cos(torch.mm(self.xTor,self.rand_proj) + self.phase_shift)
+		return P
+
+	def torch_rbf(self):
+		#self.xTor = self.x
+		#if type(self.x) == np.ndarray:
+		#	self.xTor = torch.from_numpy(self.x)
+		#	self.xTor = Variable(self.xTor.type(self.dtype), requires_grad=False)
+
+		#if type(self.xTor) != torch.Tensor:
+		#	raise ValueError('An unknown datatype is passed into get_rbf as %s'%str(type(self.x)))
+
+		#P = torch.cos(torch.mm(self.xTor,self.rand_proj) + self.phase_shift)
+		
+		P = self.__call__()
 		K = torch.mm(P, P.transpose(0,1))
 		K = (2.0/self.sample_num)*K
 		K = F.relu(K)
@@ -85,25 +100,31 @@ class RFF:
 
 if __name__ == "__main__":
 	np.set_printoptions(precision=4)
-	np.set_printoptions(threshold=np.nan)
 	np.set_printoptions(linewidth=300)
 	np.set_printoptions(suppress=True)
+	torch.set_printoptions(edgeitems=3)
+	torch.set_printoptions(threshold=10_00)
+	torch.set_printoptions(linewidth=400)
+
 
 	X = np.random.randn(5,2)
-	sigma = 1
-	gamma = 1.0/(2*sigma*sigma)
+	σ = 1
+	gamma = 1.0/(2*σ*σ)
 
 	rff = RFF(30000)
-	rbf_np = rff.get_rbf(X, sigma)
+	rbf_np = rff.get_rbf(X, σ)
 
 	rff2 = RFF(30000)
-	rbf_torch = rff2.get_rbf(X, sigma, True)
+	rbf_torch = rff2.get_rbf(X, σ, True)
 
 	sk_rbf = sklearn.metrics.pairwise.rbf_kernel(X, gamma=gamma)
 
-	print(rbf_torch)
-	print('\n')
-	print(rbf_np)
-	print('\n')
+	print('Using SKlearn library')
 	print(sk_rbf)
+	print('\n')
+	print('Using my own code with Pytorch')
+	print(rbf_torch.cpu().detach().numpy())
+	print('\n')
+	print('Using My own code')
+	print(rbf_np)
 
