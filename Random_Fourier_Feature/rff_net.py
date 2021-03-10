@@ -1,12 +1,17 @@
 #!/usr/bin/env python
 
+
+from src.RFF import RFF
+from src.DManager import DManager
+from src.terminal_print import *
+from src.basic_optimizer import basic_optimizer
+from src.line_plot import line_plot
+
+
 import torch
 from torch.autograd import Variable
-from RFF import RFF
-from basic_optimizer import basic_optimizer
+from sklearn.metrics import accuracy_score
 from torch.utils.data import Dataset, DataLoader
-from DManager import DManager
-from terminal_print import *
 import numpy as np
 import torch.nn.functional as F
 from sklearn.preprocessing import OneHotEncoder
@@ -16,97 +21,52 @@ class rff_net(torch.nn.Module):
 	def __init__(self, db, learning_rate=0.001):
 		super(rff_net, self).__init__()
 		self.db = db
+		self.loss_history = []
 		self.learning_rate = learning_rate
-		self.Φ = RFF(db['RFF_Width'])		# RFF width
-		self.l = []	
+		self.Φ = RFF(rff_width=db['RFF_Width'])		# RFF width
 
+		self.W1 = torch.nn.Parameter(torch.randn((db['d'], db['RFF_Width']), device=db['device'] ), requires_grad=True)
+		self.W2 = torch.nn.Parameter(torch.randn((db['RFF_Width'], db['RFF_Width']), device=db['device'] ), requires_grad=True)
+		self.W3 = torch.nn.Parameter(torch.randn((db['RFF_Width'], db['out_dim']), device=db['device'] ), requires_grad=True)
 
-		#self.W = torch.zeros(db['d'], db['W_Width'])
-		#torch.nn.init.kaiming_normal_(self.W , a=0, mode='fan_in')	
-		#self.W = self.W.cuda()
-		#param = torch.nn.Parameter(self.W.type(db['dataType']), requires_grad=True)
-		#self.register_parameter(name='W%d'%len(self.l), param=param)
-
-
-		self.W = torch.nn.Parameter(torch.randn((db['d'], db['W_Width']), device=db['device'] ), requires_grad=True)
-
-        #self.a = torch.nn.Parameter(torch.randn(()))
-        #self.b = torch.nn.Parameter(torch.randn(()))
-        #self.c = torch.nn.Parameter(torch.randn(()))
-        #self.d = torch.nn.Parameter(torch.randn(()))
-
-		#self.l.append(self.add_linear(db['d'], db['W_Width']))
-
-		
-		#self.l.append(self.add_linear(db['d'], db['W_Width']))
-		#for ᘔ in np.arange(2, db['depth']):
-		#	self.l.append(self.add_linear(db['RFF_Width'], db['W_Width']))
-		#self.l.append(self.add_linear(db['RFF_Width'], db['out_dim']))
-
-		self.output_network()
-
-	def add_linear(self, inDim, outDim):
-		W = torch.zeros(inDim, outDim)
-		W = Variable(W.type(db['dataType']), requires_grad=True)
-		W = W.to(self.db['device'], non_blocking=True )										# make sure the data is stored in CPU or GPU device
-		torch.nn.init.kaiming_normal_(W , a=0, mode='fan_in')	
-
-		self.register_parameter(name='W%d'%len(self.l), param=torch.nn.Parameter(W))
-		return W
+		#self.output_network()
 
 	def output_network(self):
-		print('\tConstructing Kernel Net')
-		for α, W in enumerate(self.l):
-			print('layer %d : %s'%(α, str(W.shape)))
+		for name, W in self.named_parameters(): print(name, W.shape)
 
 	def get_optimizer(self):
-		#for name, W in self.named_parameters(): print(name, W.shape)
-	
 		return torch.optim.Adam(self.parameters(), lr=self.db['learning_rate'])
 	
 	def optimization_initialization(self):
 		pass
 
 	def on_new_epoch(self, loss, epoch, lr):
-		#print('loss: %.6f, epoch: %d, lr:%.7f'%(loss, epoch, lr))
+		self.loss_history.append(loss)
 		write_to_current_line('loss: %.6f, epoch: %d, lr:%.7f'%(loss, epoch, lr))
 
 	def predict(self, x):
-		x = x.cuda()
-		yᵢ = torch.matmul(x,self.W)
-		yᵢ = F.softmax(yᵢ, dim=1)
-	
-		return torch.round(yᵢ)
+		db = self.db
+
+		# Use Relu
+		y1 = torch.matmul(x, self.W1)
+		Φy1 = self.Φ(y1)
+
+		y2 = torch.matmul(Φy1, self.W2)
+		Φy2 = self.Φ(y2)
+
+		ŷ = torch.matmul(Φy2, self.W3)
+		ŷ = F.softmax(ŷ, dim=1)
+		return ŷ
 
 	def forward(self, x, y, i):
-		#Σ = torch.nn.Sigmoid()
-		#yᵢ = torch.matmul(x,self.l[0])
-		yᵢ = torch.matmul(x,self.W)
+		db = self.db
+		ŷ = self.predict(x)
 
-		#yᵢ = Σ(yᵢ)
-		yᵢ = F.softmax(yᵢ, dim=1)
-		y = y.to(device=db['device'], dtype=torch.int64)
-		loss = db['loss_function'](yᵢ, y)
+		if type(db['loss_function']) == type(torch.nn.CrossEntropyLoss()):
+			y = y.to(device=db['device'], dtype=torch.int64)
+
+		loss = db['loss_function'](ŷ, y)
 		return loss
-
-
-#		db = self.db
-#		σ = 0.01
-#		Φyᵢ = x
-#		depth = len(self.l)
-#
-#		for ι, α in enumerate(self.l, 1):
-#			yᵢ = torch.matmul(Φyᵢ,α)
-#			if ι != depth: Φyᵢ = self.Φ(yᵢ, σ)
-#
-#		if db['loss_function'] == torch.nn.MSELoss():
-#			yᵢ = yᵢ.view(x.shape[0])
-#		else:
-#			yᵢ = F.softmax(yᵢ, dim=1)
-#			y = y.to(device=db['device'], dtype=torch.int64)
-#
-#		loss = db['loss_function'](yᵢ, y)
-#		return loss
 		
 
 if __name__ == "__main__":
@@ -117,31 +77,64 @@ if __name__ == "__main__":
 	torch.set_printoptions(threshold=10_00)
 	torch.set_printoptions(linewidth=400)
 
-	N = 50
+	N = 200
 	X1 = np.random.rand(N,3)
-	X2 = np.random.rand(N,3) + 10
+	X2 = np.random.rand(N,3) #+ 10
 	X = np.vstack((X1,X2))
-
 	Y = np.hstack((np.ones(N), np.zeros(N)))
-	#Y = np.reshape(Y,(len(Y),1))
-	#Yₒ = OneHotEncoder(categories='auto', sparse=False).fit_transform(Y)
 
 	db = {}
 	db['loss_function'] = torch.nn.CrossEntropyLoss()			# torch.nn.functional.cross_entropy, torch.nn.MSELoss, torch.nn.CrossEntropyLoss
 	db['d'] = X.shape[1]
-	db['W_Width'] = 2
-	db['RFF_Width'] = 1000
+	db['RFF_Width'] = 100
 	db['depth'] = 4
 	db['device'] = 'cuda'
 	db['out_dim'] = 2				# 1 if regression
-	db['max_ℓ#'] = 1000
+	db['max_ℓ#'] = 200
 	db['learning_rate'] = 0.001
 	db['dataType'] = torch.FloatTensor
 
 	DM = DManager(X, Y, db['dataType'])
 	loader = DataLoader(dataset=DM, batch_size=16, shuffle=True, pin_memory=True, drop_last=True)
 
+	#	Running RFF
 	R = rff_net(db)
 	basic_optimizer(R, loader)
-	Ŷ = R.predict(DM.X_Var)
+	Ŷ = R.predict(DM.X_Var.cuda())
+	Ŷ = np.argmax(Ŷ.cpu().detach().numpy(), axis=1)
+	Acc1 = accuracy_score(Ŷ, Y)
+	Lrff = np.array(R.loss_history)
+
+	#	Running Relu
+	R = rff_net(db)
+	R.Φ = F.relu
+	basic_optimizer(R, loader)
+	Ŷ2 = R.predict(DM.X_Var.cuda())
+	Ŷ2 = np.argmax(Ŷ2.cpu().detach().numpy(), axis=1)
+	Acc2 = accuracy_score(Ŷ2, Y)
+	Lrelu = np.array(R.loss_history)
+
+
+	#	Running sigmoid
+	R = rff_net(db)
+	R.Φ = F.sigmoid
+	basic_optimizer(R, loader)
+	Ŷ3 = R.predict(DM.X_Var.cuda())
+	Ŷ3 = np.argmax(Ŷ3.cpu().detach().numpy(), axis=1)
+	Acc3 = accuracy_score(Ŷ3, Y)
+	Lsigmoid = np.array(R.loss_history)
+
+
+	epochs = np.arange(Lrff.shape[0])
+	joint_loss = np.hstack((Lrelu, Lrff, Lsigmoid))
+
+	LP = line_plot()
+	LP.add_plot(epochs,Lrff, color='blue')
+	LP.add_plot(epochs,Lrelu, color='green')
+	LP.add_plot(epochs,Lsigmoid, color='red')
+	LP.set_xlabel('Number of Epoch')
+	LP.set_ylabel('Loss')
+	LP.set_title('RFF Vs Relu Activation Functions')
+	LP.add_text(epochs, joint_loss, 'Green:Relu, Acc:%.3f\nRed:Sigmoid, Acc:%.3f\nBlue:RFF, Acc:%.3f'%(Acc2, Acc3, Acc1), α=0.4, β=0.5)
+	LP.show()
 	import pdb; pdb.set_trace()

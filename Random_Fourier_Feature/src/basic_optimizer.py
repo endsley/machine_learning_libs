@@ -14,7 +14,6 @@ def basic_optimizer(model, train_loader):
 	scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau( optimizer, factor=0.5, min_lr=1e-10, patience=50, verbose=False)
 
 	for epoch in range(db['max_ℓ#']):
-
 		loss_list = []	
 		for (i, data) in enumerate(train_loader):
 			[inputs, labels, indices] = data
@@ -27,41 +26,13 @@ def basic_optimizer(model, train_loader):
 			loss = model(inputs, labels, indices)
 			loss.backward()
 			loss.retain_grad()
-
-
-			#print(model.W)
-			#print(model.W.requires_grad)
-			#print(model.W.grad)
-			#print(model.W.is_leaf)
-			#print('\n')
-
-			#with torch.no_grad():
-			#	print(model.W)
-			#	print(model.W.grad)
-			##	model.W -= 0.001* model.W.grad
-			##	model.W.grad = None
-			#import pdb; pdb.set_trace()
-			print(loss.item())
-
-
-			#import pdb; pdb.set_trace()
-			#for param in model.parameters(): 	print(param)
-			#	print(param.grad)
-			#	import pdb; pdb.set_trace()
-
 			optimizer.step()
 			optimizer.zero_grad()
-
 			loss_list.append(loss.item())
 
 		loss_avg = np.array(loss_list).mean()
 		scheduler.step(loss_avg)
-
-		#early_exit = model.on_new_epoch(loss_avg, (epoch+1), scheduler._last_lr[0])
-		#if early_exit: break
-		#if loss_avg < 0.0001: break
-		#if scheduler._last_lr[0] < 1e-9: break
-
+		model.on_new_epoch(loss_avg, epoch, scheduler._last_lr[0])
 
 
 
