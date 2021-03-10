@@ -39,36 +39,30 @@ class RFF:
 
 
 	def use_torch(self, dtype):
+		dvc = self.x.device
 		self.phase_shift = torch.from_numpy(self.phase_shift)
 		self.phase_shift = Variable(self.phase_shift.type(dtype), requires_grad=False)
+		self.phase_shift = self.phase_shift.to(dvc, non_blocking=True )										# make sure the data is stored in CPU or GPU device
 
 		self.rand_proj = torch.from_numpy(self.rand_proj)
 		self.rand_proj = Variable(self.rand_proj.type(dtype), requires_grad=False)
+		self.rand_proj = self.rand_proj.to(dvc, non_blocking=True )										# make sure the data is stored in CPU or GPU device
 
-	def __call__(self):
-		self.xTor = self.x
+	def __call__(self, x, σ, dtype=torch.FloatTensor):
+		self.σ = σ
+		self.initialize_RFF(x, σ, True, dtype)
+
 		if type(self.x) == np.ndarray:
-			self.xTor = torch.from_numpy(self.x)
-			self.xTor = Variable(self.xTor.type(self.dtype), requires_grad=False)
+			self.x = torch.from_numpy(self.x)
+			self.x = Variable(self.x.type(self.dtype), requires_grad=False)
 
-		if type(self.xTor) != torch.Tensor:
+		elif type(self.x) != torch.Tensor:
 			raise ValueError('An unknown datatype is passed into get_rbf as %s'%str(type(self.x)))
 
-
-		P = torch.cos(torch.mm(self.xTor,self.rand_proj) + self.phase_shift)
+		P = torch.cos(torch.mm(self.x,self.rand_proj) + self.phase_shift)
 		return P
 
 	def torch_rbf(self):
-		#self.xTor = self.x
-		#if type(self.x) == np.ndarray:
-		#	self.xTor = torch.from_numpy(self.x)
-		#	self.xTor = Variable(self.xTor.type(self.dtype), requires_grad=False)
-
-		#if type(self.xTor) != torch.Tensor:
-		#	raise ValueError('An unknown datatype is passed into get_rbf as %s'%str(type(self.x)))
-
-		#P = torch.cos(torch.mm(self.xTor,self.rand_proj) + self.phase_shift)
-		
 		P = self.__call__()
 		K = torch.mm(P, P.transpose(0,1))
 		K = (2.0/self.sample_num)*K
